@@ -2,7 +2,10 @@ module github.com/kodsurfer/onlycode
 
 go 1.24.4
 
-require github.com/docker/docker v28.2.2+incompatible
+require (
+	github.com/docker/docker v28.2.2+incompatible
+	github.com/gorilla/mux v1.8.1
+)
 
 require (
 	github.com/Microsoft/go-winio v0.4.14 // indirect
