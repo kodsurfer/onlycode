@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Code Editor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.37.1/min/vs/loader.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
+            color: #f0f0f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: 0 auto;
+            color: #b3c6e0;
+            line-height: 1.6;
+        }
+        
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: rgba(30, 35, 48, 0.9);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+        
+        .toolbar {
+            background: #1e2330;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: linear-gradient(to right, #4a6fc9, #5e4fc9);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(94, 79, 201, 0.4);
+        }
+        
+        .btn-run {
+            background: linear-gradient(to right, #00c853, #00b248);
+        }
+        
+        .btn-clear {
+            background: linear-gradient(to right, #ff5252, #ff1744);
+        }
+        
+        .language-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .language-selector label {
+            font-weight: 500;
+        }
+        
+        .language-selector select {
+            background: #2a3042;
+            color: white;
+            border: 1px solid #434a5f;
+            padding: 8px 12px;
+            border-radius: 6px;
+            width: 150px;
+        }
+        
+        .main-content {
+            display: flex;
+            gap: 20px;
+            padding: 0 20px 20px;
+            min-height: 65vh;
+        }
+        
+        .editor-wrapper {
+            flex: 1;
+            background: #1e2330;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .editor-header {
+            background: #252b3d;
+            padding: 12px 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #editor {
+            width: 100%;
+            height: 55vh;
+        }
+        
+        .output-wrapper {
+            flex: 1;
+            background: #1e2330;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .output-header {
+            background: #252b3d;
+            padding: 12px 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #output {
+            flex: 1;
+            background: #161a25;
+            padding: 15px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 15px;
+            line-height: 1.5;
+            color: #e0e0e0;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+            padding: 0 20px;
+        }
+        
+        .feature-card {
+            background: rgba(30, 35, 48, 0.8);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-8px);
+        }
+        
+        .feature-card i {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #5e4fc9;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 12px;
+            color: #4facfe;
+        }
+        
+        .feature-card p {
+            color: #b3c6e0;
+            line-height: 1.6;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #b3c6e0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        @media (max-width: 900px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .editor-wrapper, .output-wrapper {
+                width: 100%;
+            }
+            
+            .toolbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-code"></i> Online Code Editor</h1>
+            <p>A powerful, browser-based code editor that supports multiple programming languages with real-time execution and output display.</p>
+        </header>
+        
+        <div class="editor-container">
+            <div class="toolbar">
+                <div class="controls">
+                    <button id="runBtn" class="btn btn-run">
+                        <i class="fas fa-play"></i> Run Code
+                    </button>
+                    <button id="clearBtn" class="btn btn-clear">
+                        <i class="fas fa-eraser"></i> Clear Output
+                    </button>
+                </div>
+                
+                <div class="language-selector">
+                    <label for="language"><i class="fas fa-code"></i> Language:</label>
+                    <select id="language">
+                        <option value="javascript">JavaScript</option>
+                        <option value="python">Python</option>
+                        <option value="html">HTML</option>
+                        <option value="css">CSS</option>
+                        <option value="java">Java</option>
+                        <option value="csharp">C#</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="main-content">
+                <div class="editor-wrapper">
+                    <div class="editor-header">
+                        <i class="fas fa-file-code"></i> Code Editor
+                    </div>
+                    <div id="editor"></div>
+                </div>
+                
+                <div class="output-wrapper">
+                    <div class="output-header">
+                        <i class="fas fa-terminal"></i> Output
+                    </div>
+                    <pre id="output">// Output will appear here after running your code</pre>
+                </div>
+            </div>
+        </div>
+        
+        <div class="features">
+            <div class="feature-card">
+                <i class="fas fa-bolt"></i>
+                <h3>Real-time Execution</h3>
+                <p>Run your code instantly and see the output in real-time without any server delays.</p>
+            </div>
+            
+            <div class="feature-card">
+                <i class="fas fa-language"></i>
+                <h3>Multi-language Support</h3>
+                <p>Supports JavaScript, Python, HTML, CSS, Java, C# and more with syntax highlighting.</p>
+            </div>
+            
+            <div class="feature-card">
+                <i class="fas fa-cloud"></i>
+                <h3>Cloud-Based</h3>
+                <p>No installation required. Access your code from anywhere with an internet connection.</p>
+            </div>
+        </div>
+        
+        <footer>
+            <p>© 2023 Online Code Editor | Created with Monaco Editor</p>
+        </footer>
+    </div>
+
+    <script>
+        // Initialize Monaco Editor
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.37.1/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            window.editor = monaco.editor.create(document.getElementById('editor'), {
+                value: `// Welcome to the Online Code Editor
+function helloWorld() {
+    console.log("Hello, World!");
+    return "This is the result of the function";
+}
+
+// Run the function and display the result
+const result = helloWorld();
+console.log(result);
+
+// Try writing your own code and click "Run Code"`,
+                language: 'javascript',
+                theme: 'vs-dark',
+                fontSize: 14,
+                minimap: { enabled: true },
+                automaticLayout: true,
+                scrollBeyondLastLine: false,
+                roundedSelection: false
+            });
+            
+            // Set editor size to fill container
+            window.addEventListener('resize', function() {
+                editor.layout();
+            });
+        });
+        
+        // Language selector
+        document.getElementById('language').addEventListener('change', function() {
+            const language = this.value;
+            const model = editor.getModel();
+            monaco.editor.setModelLanguage(model, language);
+            
+            // Set sample code based on language
+            switch(language) {
+                case 'python':
+                    editor.setValue(`# Python sample code
+def hello_world():
+    print("Hello, World!")
+    return "This is the result of the function"
+
+# Run the function and display the result
+result = hello_world()
+print(result)`);
+                    break;
+                case 'html':
+                    editor.setValue(`<!-- HTML sample code -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sample Page</title>
+</head>
+<body>
+    <h1>Hello, World!</h1>
+    <p>This is a sample HTML document.</p>
+</body>
+</html>`);
+                    break;
+                case 'css':
+                    editor.setValue(`/* CSS sample code */
+body {
+    background-color: #f0f0f0;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    width: 80%;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    color: #2c3e50;
+    text-align: center;
+}`);
+                    break;
+                case 'java':
+                    editor.setValue(`// Java sample code
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+        String result = getResult();
+        System.out.println(result);
+    }
+    
+    public static String getResult() {
+        return "This is the result of the function";
+    }
+}`);
+                    break;
+                case 'csharp':
+                    editor.setValue(`// C# sample code
+using System;
+
+class Program {
+    static void Main() {
+        Console.WriteLine("Hello, World!");
+        string result = GetResult();
+        Console.WriteLine(result);
+    }
+    
+    static string GetResult() {
+        return "This is the result of the function";
+    }
+}`);
+                    break;
+                default: // JavaScript
+                    editor.setValue(`// JavaScript sample code
+function helloWorld() {
+    console.log("Hello, World!");
+    return "This is the result of the function";
+}
+
+// Run the function and display the result
+const result = helloWorld();
+console.log(result);`);
+            }
+        });
+        
+        // Run button
+        document.getElementById('runBtn').addEventListener('click', function() {
+            runCode();
+        });
+        
+        // Clear button
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            document.getElementById('output').textContent = '';
+        });
+        
+        // Run code function
+        function runCode() {
+            const language = document.getElementById('language').value;
+            const code = editor.getValue();
+            let output = '';
+            
+            try {
+                // Clear previous output
+                document.getElementById('output').textContent = '';
+                
+                // Capture console.log output
+                const originalLog = console.log;
+                console.log = function(...args) {
+                    output += args.join(' ') + '\n';
+                };
+                
+                // Execute based on language
+                switch(language) {
+                    case 'javascript':
+                        eval(code);
+                        break;
+                    case 'python':
+                        // In a real implementation, this would be sent to a server
+                        output = "Python execution requires server-side processing\n";
+                        output += "In this demo, we'll just show the code:\n\n" + code;
+                        break;
+                    case 'html':
+                        // For HTML, show in new window
+                        const htmlWindow = window.open('', '_blank');
+                        htmlWindow.document.write(code);
+                        htmlWindow.document.close();
+                        output = "HTML rendered in new window";
+                        break;
+                    case 'css':
+                        // For CSS, apply to a sample page
+                        const cssWindow = window.open('', '_blank');
+                        cssWindow.document.write(`
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <style>${code}</style>
+                            </head>
+                            <body>
+                                <div class="container">
+                                    <h1>CSS Preview</h1>
+                                    <p>This is a preview of your CSS styles.</p>
+                                </div>
+                            </body>
+                            </html>
+                        `);
+                        cssWindow.document.close();
+                        output = "CSS rendered in new window";
+                        break;
+                    case 'java':
+                    case 'csharp':
+                        output = "Java and C# execution requires server-side processing\n";
+                        output += "In this demo, we'll just show the code:\n\n" + code;
+                        break;
+                }
+                
+                // Restore console.log
+                console.log = originalLog;
+                
+                // Display output
+                if (language === 'javascript') {
+                    document.getElementById('output').textContent = output;
+                } else {
+                    document.getElementById('output').textContent = output;
+                }
+            } catch (error) {
+                document.getElementById('output').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        // Keyboard shortcut for running code (Ctrl+Enter)
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                runCode();
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
