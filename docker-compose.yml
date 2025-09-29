@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: onlycode-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: onlycode
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - onlycode-network
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: onlycode-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - onlycode-network
+
+  backend:
+    build: ./backend
+    container_name: onlycode-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/onlycode
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-super-secret-jwt-key-here
+    depends_on:
+      - mongodb
+      - redis
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - onlycode-network
+    command: npm run dev
+
+volumes:
+  mongodb_data:
+
+networks:
+  onlycode-network:
+    driver: bridge
